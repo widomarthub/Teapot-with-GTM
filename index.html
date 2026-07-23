@@ -225,12 +225,8 @@
                             <span id="summary-subtotal">৳ 0</span>
                         </div>
                         <div class="summary-row" id="shipping-row">
-                            <span>ডেলিভারি চার্জ:</span>
-                            <span id="summary-shipping">৳ 60</span>
-                        </div>
-                        <div class="summary-row" id="cod-fee-row">
-                            <span>COD চার্জ:</span>
-                            <span id="summary-cod">৳ 20</span>
+                            <span>ডেলিভারি চার্জ: <span class="glow-text">সারা বাংলাদেশে</span></span>
+                            <span id="summary-shipping">৳ 80</span>
                         </div>
                         <div class="summary-row total">
                             <span>সর্বমোট:</span>
@@ -240,59 +236,14 @@
 
                     <!-- Shipping (Moved to Customer Info) -->
 
-                    <!-- Payment Method -->
-                    <div class="form-group">
-                        <label>পেমেন্ট পদ্ধতি:</label>
-                        <div class="payment-selector">
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="cod" checked>
-                                <span>ক্যাশ অন ডেলিভারি</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="advance">
-                                <span>অ্যাডভান্স পেমেন্ট (ডেলিভারি চার্জ কম)</span>
-                            </label>
-                        </div>
 
-                        <div id="advance-payment-box" class="advance-payment-box" style="display: none;">
-                            <div class="payment-brands">
-                                <div class="brand-card bkash-card payment-provider-box" data-provider="bKash">
-                                    <div class="brand-logo">bKash</div>
-                                    <p>বিকাশ পার্সোনাল নম্বর:</p>
-                                    <strong>01879775004</strong>
-                                </div>
-                                <div class="brand-card nagad-card payment-provider-box" data-provider="Nagad">
-                                    <div class="brand-logo">Nagad</div>
-                                    <p>নগদ পার্সোনাল নম্বর:</p>
-                                    <strong>01611867419</strong>
-                                </div>
-                            </div>
-                            <p class="payment-note">যেকোনো একটি নম্বরে টাকা পাঠানোর পর, নিচে আপনার নম্বর এবং ট্রানজেকশন
-                                আইডি (TrxID) লিখুন।</p>
-                            <input type="text" id="payment-phone" placeholder="যে নম্বর থেকে টাকা পাঠিয়েছেন">
-                            <input type="text" id="payment-trx" placeholder="ট্রানজেকশন আইডি (TrxID)">
-                        </div>
-                    </div>
 
                     <!-- Customer Info -->
                     <div class="customer-info">
                         <input type="text" id="cust-name" placeholder="আপনার নাম" required>
                         <input type="tel" id="cust-phone" placeholder="মোবাইল নম্বর" required>
 
-                        <div class="form-group" style="margin-bottom: 15px; margin-top: -5px;">
-                            <label>জেলা / এলাকা নির্বাচন করুন <span class="text-danger">*</span>:</label>
-                            <select id="shipping-district" required>
-                                <option value="" disabled selected>আপনার জেলা / এলাকা নির্বাচন করুন</option>
-                                <option value="dhaka">ঢাকা সিটি (Inside Dhaka)</option>
-                                <option value="savar">সাভার (Savar)</option>
-                                <option value="gazipur">গাজীপুর (Gazipur)</option>
-                                <option value="narayanganj">নারায়ণগঞ্জ (Narayanganj)</option>
-                                <option value="keraniganj">কেরানীগঞ্জ (Keraniganj)</option>
-                                <option value="other">অন্যান্য সকল জেলা (Other Districts)</option>
-                            </select>
-                            <div id="delivery-charge-badge"
-                                style="margin-top: 8px; font-weight: 600; font-size: 0.95rem; display: none;"></div>
-                        </div>
+
 
                         <textarea id="cust-address" placeholder="সম্পূর্ণ ঠিকানা" rows="3" required></textarea>
                         <button type="button" class="btn-primary w-100" id="btn-submit-order">অর্ডার কনফার্ম
