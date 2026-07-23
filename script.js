@@ -2,17 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Elements
     const btnMinusList = document.querySelectorAll('.btn-minus');
     const btnPlusList = document.querySelectorAll('.btn-plus');
-    const shippingDistrict = document.getElementById('shipping-district');
-    const paymentInputs = document.querySelectorAll('input[name="payment"]');
-    const advancePaymentBox = document.getElementById('advance-payment-box');
     
     const cartItemsList = document.getElementById('cart-items-list');
     const summarySubtotal = document.getElementById('summary-subtotal');
     const summaryShipping = document.getElementById('summary-shipping');
-    const summaryCod = document.getElementById('summary-cod');
     const summaryTotal = document.getElementById('summary-total');
     
-    const codFeeRow = document.getElementById('cod-fee-row');
     const btnSubmitOrder = document.getElementById('btn-submit-order');
     
     const modalOverlay = document.getElementById('success-modal');
@@ -30,9 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     // Format: { "550": { name: "550 ml Teapot", price: 790, qty: 0 }, ... }
     let cart = {};
-    let selectedDistrict = '';
-    let isDistrictSelected = false;
-    let isCod = true;
 
     // Helper: Convert English numerals to Bangla
     function toBnNum(num) {
@@ -60,23 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Determine Shipping Logic
     function calculateShipping() {
-        let deliveryCharge = 0;
+        let deliveryCharge = 80;
         let codCharge = 0;
-
-        if (isDistrictSelected) {
-            if (selectedDistrict === 'dhaka') {
-                deliveryCharge = isCod ? 60 : 30;
-            } else if (['savar', 'gazipur', 'narayanganj', 'keraniganj'].includes(selectedDistrict)) {
-                deliveryCharge = isCod ? 80 : 40;
-            } else {
-                deliveryCharge = isCod ? 110 : 70;
-            }
-        }
-
-        if (isCod) {
-            codCharge = 20;
-        }
-
         return { deliveryCharge, codCharge };
     }
 
@@ -109,25 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnSubmitOrder.disabled = false;
         }
 
-        const { deliveryCharge, codCharge } = calculateShipping();
-
-        const badge = document.getElementById('delivery-charge-badge');
-        if (badge) {
-            if (isDistrictSelected) {
-                badge.style.display = 'block';
-                badge.style.color = '#059669';
-                
-                if (selectedDistrict === 'dhaka') {
-                    badge.innerText = '👉 ঢাকা সিটি ডেলিভারি চার্জ: ৬০ টাকা কার্যকর';
-                } else if (['savar', 'gazipur', 'narayanganj', 'keraniganj'].includes(selectedDistrict)) {
-                    badge.innerText = '👉 এই এলাকার জন্য ডেলিভারি চার্জ: ৮০ টাকা কার্যকর';
-                } else {
-                    badge.innerText = '👉 ঢাকার বাইরে ডেলিভারি চার্জ: ১১০ টাকা কার্যকর';
-                }
-            } else {
-                badge.style.display = 'none';
-            }
-        }
+        const { deliveryCharge } = calculateShipping();
 
         // Summary Calculations
         summarySubtotal.innerText = `৳ ${toBnNum(subtotal)}`;
@@ -135,18 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let total = subtotal + deliveryCharge;
 
-        if (totalItems > 0) {
-            if (isCod) {
-                codFeeRow.style.display = 'flex';
-                total += codCharge;
-                summaryCod.innerText = `৳ ${toBnNum(codCharge)}`;
-            } else {
-                codFeeRow.style.display = 'none';
-            }
-        } else {
-            // Show defaults even if empty for preview
-            if (isCod) codFeeRow.style.display = 'flex';
-            else codFeeRow.style.display = 'none';
+        if (totalItems === 0) {
             total = 0;
         }
 
@@ -188,40 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Shipping Area Handler
-    shippingDistrict.addEventListener('change', (e) => {
-        isDistrictSelected = true;
-        selectedDistrict = e.target.value;
-        updateCart();
-    });
 
-    // Payment Method Handler
-    paymentInputs.forEach(input => {
-        input.addEventListener('change', (e) => {
-            isCod = e.target.value === 'cod';
-            
-            // Toggle Advance Payment Box
-            if (isCod) {
-                advancePaymentBox.style.display = 'none';
-            } else {
-                advancePaymentBox.style.display = 'block';
-            }
-            
-            updateCart();
-        });
-    });
-
-    // Advance Payment Provider Selection
-    let selectedAdvanceProvider = '';
-    const providerBoxes = document.querySelectorAll('.payment-provider-box');
-    
-    providerBoxes.forEach(box => {
-        box.addEventListener('click', () => {
-            providerBoxes.forEach(b => b.classList.remove('selected-provider'));
-            box.classList.add('selected-provider');
-            selectedAdvanceProvider = box.dataset.provider;
-        });
-    });
 
     // Accordion Handler
     accordionHeaders.forEach(header => {
@@ -268,23 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('দয়া করে আপনার নাম, মোবাইল নম্বর এবং সম্পূর্ণ ঠিকানা প্রদান করুন।');
             return;
         }
-        if (!isDistrictSelected) {
-            alert('দয়া করে আপনার ডেলিভারি জেলা নির্বাচন করুন।');
-            return;
-        }
 
-        if (!isCod) {
-            if (!selectedAdvanceProvider) {
-                alert('দয়া করে পেমেন্ট মাধ্যম (bKash অথবা Nagad) নির্বাচন করুন।');
-                return;
-            }
-            const payPhone = document.getElementById('payment-phone').value.trim();
-            const payTrx = document.getElementById('payment-trx').value.trim();
-            if (!payPhone || !payTrx) {
-                alert('দয়া করে পেমেন্ট নম্বর এবং ট্রানজেকশন আইডি প্রদান করুন।');
-                return;
-            }
-        }
 
         // Show loading state on button
         const originalBtnText = btnSubmitOrder.innerText;
@@ -301,11 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        const { deliveryCharge, codCharge } = calculateShipping();
+        const { deliveryCharge } = calculateShipping();
         let grandTotal = subtotal + deliveryCharge;
-        if (isCod) {
-            grandTotal += codCharge;
-        }
 
         // Prepare object for Web3Forms (Keys must match what you want to see in email/dashboard)
         const formData = {
@@ -315,10 +211,10 @@ document.addEventListener('DOMContentLoaded', () => {
             Address: address,
             Package: packageDetails.join(', '),
             TotalPrice: grandTotal + " Tk",
-            DeliveryZone: selectedDistrict,
-            PaymentMethod: isCod ? 'Cash on Delivery' : `Advance Payment (${selectedAdvanceProvider})`,
-            SenderNumber: isCod ? 'N/A' : document.getElementById('payment-phone').value.trim(),
-            TransactionID: isCod ? 'N/A' : document.getElementById('payment-trx').value.trim()
+            DeliveryZone: "All Bangladesh",
+            PaymentMethod: "Cash on Delivery",
+            SenderNumber: "N/A",
+            TransactionID: "N/A"
         };
 
         // Send to Web3Forms using AJAX Fetch
@@ -345,11 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('cust-name').value = '';
                 document.getElementById('cust-phone').value = '';
                 document.getElementById('cust-address').value = '';
-                document.getElementById('shipping-district').value = '';
-                if (!isCod) {
-                    document.getElementById('payment-phone').value = '';
-                    document.getElementById('payment-trx').value = '';
-                }
             } else {
                 console.log(json.message);
                 alert('Something went wrong. Please try again.');
@@ -534,4 +425,56 @@ document.addEventListener('DOMContentLoaded', () => {
         // By not re-pushing the state instantly on the second consecutive press, it allows a 2-click exit.
         console.log("Accidental page exit prevented once.");
     });
+
+    // Background Music Logic
+    const bgMusic = document.getElementById('bg-music');
+    const musicToggleBtn = document.getElementById('music-toggle-btn');
+    const iconPlay = document.getElementById('music-icon-play');
+    const iconPause = document.getElementById('music-icon-pause');
+
+    if (bgMusic && musicToggleBtn) {
+        let musicStarted = false;
+
+        function updatePlayState(isPlaying) {
+            if (isPlaying) {
+                iconPlay.style.display = 'none';
+                iconPause.style.display = 'block';
+                musicToggleBtn.classList.add('playing');
+            } else {
+                iconPlay.style.display = 'block';
+                iconPause.style.display = 'none';
+                musicToggleBtn.classList.remove('playing');
+            }
+        }
+
+        function attemptAutoPlay() {
+            if (!musicStarted && bgMusic.paused) {
+                bgMusic.play().then(() => {
+                    musicStarted = true;
+                    updatePlayState(true);
+                }).catch(e => console.log("Autoplay blocked"));
+                
+                ['touchstart', 'click', 'scroll'].forEach(e => {
+                    window.removeEventListener(e, attemptAutoPlay);
+                });
+            }
+        }
+
+        // Listen for first interaction anywhere on the page
+        ['touchstart', 'click', 'scroll'].forEach(event => {
+            window.addEventListener(event, attemptAutoPlay, { once: true, passive: true });
+        });
+
+        // Manual toggle via button
+        musicToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent duplicate firing if this is the first click
+            musicStarted = true; // Mark as started so autoplay doesn't override
+            if (bgMusic.paused) {
+                bgMusic.play().then(() => updatePlayState(true));
+            } else {
+                bgMusic.pause();
+                updatePlayState(false);
+            }
+        });
+    }
 });
