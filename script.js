@@ -37,6 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
+    // Helper: Convert Bangla numerals to English
+    function toEnNum(bnStr) {
+        const bnNumbers = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+        return bnStr.split('').map(char => {
+            let index = bnNumbers.indexOf(char);
+            return index !== -1 ? index : char;
+        }).join('');
+    }
+
     // Initialize cart state
     document.querySelectorAll('.qty-input').forEach(input => {
         const id = input.id.replace('qty-', '');
@@ -102,13 +111,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Mobile Sticky Cart Update
         if (mobileStickyCart && stickyCartText) {
+            const mBtn = document.getElementById('music-toggle-btn');
             if (totalItems > 0) {
                 mobileStickyCart.classList.add('active');
                 if (messengerBtn) messengerBtn.classList.add('cart-active');
+                if (mBtn) mBtn.classList.add('cart-active');
                 stickyCartText.innerText = `নির্বাচিত: ${toBnNum(totalItems)} টি | মোট বিল: ৳${toBnNum(total)}`;
             } else {
                 mobileStickyCart.classList.remove('active');
                 if (messengerBtn) messengerBtn.classList.remove('cart-active');
+                if (mBtn) mBtn.classList.remove('cart-active');
             }
         }
     }
@@ -137,6 +149,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
+
+    // Real-time Phone Validation
+    const phoneInput = document.getElementById('cust-phone');
+    const phoneError = document.getElementById('phone-error-msg');
+
+    if (phoneInput && phoneError) {
+        phoneInput.addEventListener('input', (e) => {
+            let val = e.target.value.trim();
+            
+            if (val.length === 0) {
+                phoneInput.classList.remove('valid-input', 'invalid-input');
+                phoneError.style.display = 'none';
+                return;
+            }
+
+            let enVal = toEnNum(val);
+            const isOnlyDigits = /^[0-9০-৯]+$/.test(val);
+            
+            let errorMsg = '';
+            let isPhoneValid = false;
+            
+            if (!isOnlyDigits) {
+                errorMsg = "শুধুমাত্র সংখ্যা ব্যবহার করুন।";
+            } else if (!enVal.startsWith('01')) {
+                errorMsg = "নম্বরটি অবশ্যই 01 (বা ০১) দিয়ে শুরু হতে হবে।";
+            } else if (enVal.length < 11) {
+                errorMsg = "১১ ডিজিটের নম্বর দিন।";
+            } else if (enVal.length > 11) {
+                errorMsg = "নম্বরটি ১১ ডিজিটের বেশি হতে পারবে না।";
+            } else {
+                isPhoneValid = true;
+            }
+            
+            if (isPhoneValid) {
+                phoneInput.classList.add('valid-input');
+                phoneInput.classList.remove('invalid-input');
+                phoneError.style.display = 'none';
+            } else {
+                phoneInput.classList.add('invalid-input');
+                phoneInput.classList.remove('valid-input');
+                phoneError.innerText = errorMsg;
+                phoneError.style.display = 'block';
+            }
+        });
+    }
 
     // Accordion Handler
     accordionHeaders.forEach(header => {
@@ -181,6 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!name || !phone || !address) {
             alert('দয়া করে আপনার নাম, মোবাইল নম্বর এবং সম্পূর্ণ ঠিকানা প্রদান করুন।');
+            return;
+        }
+
+        const enPhone = toEnNum(phone);
+        const isOnlyDigits = /^[0-9০-৯]+$/.test(phone);
+        if (!isOnlyDigits || !enPhone.startsWith('01') || enPhone.length !== 11) {
+            alert('দয়া করে সঠিক ১১ ডিজিটের মোবাইল নম্বর প্রদান করুন (যেমন: 01XXX...)');
             return;
         }
 
@@ -452,23 +516,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 bgMusic.play().then(() => {
                     musicStarted = true;
                     updatePlayState(true);
-                }).catch(e => console.log("Autoplay blocked"));
-                
-                ['touchstart', 'click', 'scroll'].forEach(e => {
-                    window.removeEventListener(e, attemptAutoPlay);
+                }).catch(e => {
+                    // Autoplay blocked by browser policy until user interacts
+                    console.log("Autoplay waiting for interaction...");
                 });
+                
+                if (musicStarted) {
+                    removeInteractionListeners();
+                }
             }
         }
 
-        // Listen for first interaction anywhere on the page
-        ['touchstart', 'click', 'scroll'].forEach(event => {
+        const interactionEvents = ['touchstart', 'click', 'scroll', 'mousemove', 'keydown'];
+        
+        function removeInteractionListeners() {
+            interactionEvents.forEach(e => {
+                window.removeEventListener(e, attemptAutoPlay);
+            });
+        }
+
+        // Listen for ANY interaction to start music
+        interactionEvents.forEach(event => {
             window.addEventListener(event, attemptAutoPlay, { once: true, passive: true });
         });
 
+        // Fallback: Try playing after 2.5 seconds anyway (might work depending on browser cache/policy)
+        setTimeout(() => {
+            attemptAutoPlay();
+        }, 2500);
+
         // Manual toggle via button
         musicToggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent duplicate firing if this is the first click
-            musicStarted = true; // Mark as started so autoplay doesn't override
+            e.stopPropagation(); // Prevent duplicate firing
+            musicStarted = true; // Mark as started
+            removeInteractionListeners(); // Remove listeners since they manually clicked
+
             if (bgMusic.paused) {
                 bgMusic.play().then(() => updatePlayState(true));
             } else {
